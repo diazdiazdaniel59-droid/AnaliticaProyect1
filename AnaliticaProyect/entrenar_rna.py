@@ -8,7 +8,7 @@ import os
 
 os.makedirs("models", exist_ok=True)
 
-data = pd.read_excel("uploads/DEMALE-HSJM_2025_data (1).xlsx")
+data = pd.read_excel("uploads/DEMALE-HSJM_2025_data.xlsx")
 
 variables = [
     "ALT (SGPT)", "AST (SGOT)", "total_bilirubin", "direct_bilirubin",

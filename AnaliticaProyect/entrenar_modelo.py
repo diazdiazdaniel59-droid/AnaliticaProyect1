@@ -10,13 +10,11 @@ from imblearn.over_sampling import SMOTE
 
 os.makedirs("models", exist_ok=True)
 
-data = pd.read_excel("uploads/DEMALE-HSJM_2025_data (1).xlsx")
+data = pd.read_excel("uploads/DEMALE-HSJM_2025_data.xlsx")
 
 variables = [
-    "AST (SGOT)", "ALT (SGPT)", "total_proteins", "direct_bilirubin",
-    "total_bilirubin", "lymphocytes", "hemoglobin", "hematocrit",
-    "age", "urea", "red_blood_cells", "monocytes",
-    "white_blood_cells", "creatinine", "ALP (alkaline_phosphatase)"
+    "ALT (SGPT)", "AST (SGOT)", "total_bilirubin", "direct_bilirubin",
+    "hemoglobin", "hematocrit", "age", "urea", "creatinine"
 ]
 objetivo = "diagnosis"
 
@@ -36,7 +34,7 @@ smote = SMOTE(random_state=42)
 X_resampled, y_resampled = smote.fit_resample(X_train_scaled, y_train)
 
 modelo = LogisticRegression(max_iter=800, random_state=42)
-modelo.fit(X_train_scaled, y_train)
+modelo.fit(X_resampled, y_resampled)
 
 accuracy = accuracy_score(y_test, modelo.predict(X_test_scaled))
 print(f"Precisión del modelo de Regresión Logística: {accuracy:.2f}")

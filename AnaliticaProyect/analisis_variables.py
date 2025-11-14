@@ -9,7 +9,7 @@ plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_palette("Blues_r")
 
 # === Cargar dataset ===
-data = pd.read_excel("uploads/DEMALE-HSJM_2025_data (1).xlsx")
+data = pd.read_excel("uploads/DEMALE-HSJM_2025_data.xlsx")
 
 # === Columna objetivo ===
 target_col = "diagnosis"

@@ -167,17 +167,6 @@
             >
           </div>
           {% endfor %}
-
-          <!-- === NUEVAS VARIABLES === -->
-          {% for var in ["AST (SGOT)", "ALT (SGPT)", "total_proteins", "direct_bilirubin",
-                         "total_bilirubin", "lymphocytes", "hemoglobin", "hematocrit",
-                         "age", "urea", "red_blood_cells", "monocytes",
-                         "white_blood_cells", "creatinine", "ALP (alkaline_phosphatase)"] %}
-          <div class="col-md-4 mb-3">
-            <label class="form-label">{{ var }}</label>
-            <input type="number" name="{{ var }}" step="0.01" placeholder="Ingrese valor" class="form-control" required>
-          </div>
-          {% endfor %}
         </div>
 
         <div class="row mt-4 align-items-end">
@@ -211,7 +200,7 @@
   </div>
 
     <script>
-  document.querySelectorAll('.numeric-input').forEach(input => {
+  document.querySelectorAll('.form-control[type="number"]').forEach(input => {
     input.addEventListener('input', function () {
       let min = parseFloat(this.min);
       let max = parseFloat(this.max);
