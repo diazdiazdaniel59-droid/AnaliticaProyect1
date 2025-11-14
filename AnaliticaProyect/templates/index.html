@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Proyecto Analítica</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo_analitica.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* ======= ESTILO GLOBAL ======= */
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top right, #0d0d1a, #090912 60%, #050509);
+      color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 50px 60px;
+      max-width: 900px;
+      width: 90%;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .logo {
+      width: 100px;
+      height: auto;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 10px #0ff);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    h1 span {
+      background: linear-gradient(90deg, #00ffff, #7a5fff, #ff00cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.85;
+      margin-bottom: 40px;
+    }
+
+    /* ======= BOTONES ======= */
+    .botones {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    .btn {
+      text-decoration: none;
+      background: linear-gradient(90deg, #00ffff, #0066ff);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+    }
+
+    .btn-alt {
+      background: linear-gradient(90deg, #7a5fff, #ff00cc);
+      box-shadow: 0 0 10px rgba(255, 0, 204, 0.4);
+    }
+
+    .btn-alt:hover {
+      box-shadow: 0 0 20px rgba(255, 0, 204, 0.7);
+    }
+
+    /* ======= NUEVO PANEL DE INFO ======= */
+    .info-panel {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px 25px;
+      width: 240px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+      transform: translateY(-8px);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.25);
+    }
+
+    .info-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+      background: linear-gradient(90deg, #00ffff, #7a5fff, #ff00cc);
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    }
+
+    .info-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+      color: #ffffff;
+    }
+
+    .info-card p {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      line-height: 1.4;
+    }
+
+    /* ======= FOOTER ======= */
+    footer {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 15px;
+      margin-top: 25px;
+    }
+
+    /* ======= ANIMACIONES ======= */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  <!-- Íconos (usamos Font Awesome) -->
+  <script src="https://kit.fontawesome.com/7c5b3df4d4.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <div class="container fade-in">
+    <img src="{{ url_for('static', filename='logo_analitica.png') }}" alt="Logo Proyecto Analítica" class="logo">
+
+    <h1>Proyecto <span>Analítica</span></h1>
+    <p class="subtitle">Sistema de diagnóstico asistido por inteligencia artificial</p>
+
+    <div class="botones">
+      <a href="{{ url_for('individual') }}" class="btn">Predicción Individual</a>
+      <a href="{{ url_for('lotes') }}" class="btn btn-alt">Predicción por Lotes</a>
+    </div>
+
+    <footer>
+      © 2025 Proyecto Analítica — Desarrollado por estudiantes de Ingeniería de Sistemas
+    </footer>
+  </div>
+
+</body>
+</html>
