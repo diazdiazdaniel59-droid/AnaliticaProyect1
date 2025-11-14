@@ -30,19 +30,22 @@ ENV/
 instance/
 .webassets-cache
 
-# Modelos y datos (opcional - puedes comentar estas líneas si quieres subir los modelos)
-*.pkl
-*.h5
-*.joblib
-*.model
+# Modelos y datos (comentar si necesitas subirlos a Streamlit Cloud)
+# *.pkl
+# *.h5
+# *.joblib
+# *.model
 
-# Datos
-uploads/*.xlsx
-uploads/*.csv
-uploads/*.xls
-*.xlsx
-*.csv
-*.xls
+# Datos (comentar si necesitas subirlos a Streamlit Cloud)
+# uploads/*.xlsx
+# uploads/*.csv
+# uploads/*.xls
+# *.xlsx
+# *.csv
+# *.xls
+
+# Excluir solo archivos temporales de uploads
+AnaliticaProyect/uploads/resultados_prediccion.xlsx
 
 # Imágenes generadas (opcional)
 static/*.png
