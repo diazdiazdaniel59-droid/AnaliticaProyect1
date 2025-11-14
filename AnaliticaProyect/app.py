@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import pickle
 import os
+import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -48,16 +49,16 @@ def load_models():
     with open(escalador_path, "rb") as f:
         scaler_logistica = pickle.load(f)
     
-    models = {
-        "rna": {
+models = {
+    "rna": {
             "modelo": modelo_rna,
             "scaler": scaler_rna
-        },
-        "logistica": {
+    },
+    "logistica": {
             "modelo": modelo_logistica,
             "scaler": scaler_logistica
-        }
     }
+}
     return models
 
 # === Variables seleccionadas (9 más relevantes) ===
@@ -78,18 +79,30 @@ nombres_variables = {
     "creatinine": "Creatinina"
 }
 
-# === Cargar dataset base para rangos ===
+# === Cargar dataset completo para obtener todos los campos ===
 @st.cache_data
-def load_ranges():
-    """Cargar rangos de valores del dataset"""
+def load_full_dataset():
+    """Cargar dataset completo para obtener todas las columnas"""
     try:
-        # Determinar el directorio base
         base_dir = os.path.dirname(os.path.abspath(__file__))
         uploads_dir = os.path.join(base_dir, "uploads")
         data_path = os.path.join(uploads_dir, "DEMALE-HSJM_2025_data.xlsx")
         
         if not os.path.exists(data_path):
-            st.warning(f"Archivo de datos no encontrado: {data_path}. Usando rangos por defecto.")
+            return None
+        
+        return pd.read_excel(data_path)
+    except Exception as e:
+        return None
+
+# === Cargar dataset base para rangos ===
+@st.cache_data
+def load_ranges():
+    """Cargar rangos de valores del dataset"""
+    try:
+        data = load_full_dataset()
+        
+        if data is None:
             # Retornar rangos por defecto si no se encuentra el archivo
             return {
                 "ALT (SGPT)": {"min": 0, "max": 500, "step": 1.0},
@@ -103,23 +116,35 @@ def load_ranges():
                 "creatinine": {"min": 0.0, "max": 10.0, "step": 0.1}
             }
         
-        data = pd.read_excel(data_path)
-        rangos = {}
-        enteras = ["age", "hematocrit", "hemoglobin", "AST (SGOT)", "ALT (SGPT)"]
+rangos = {}
+        enteras = ["age", "hematocrit", "hemoglobin", "AST (SGOT)", "ALT (SGPT)", 
+                   "red_blood_cells", "white_blood_cells", "neutrophils", "eosinophils",
+                   "lymphocytes", "monocytes", "basophils", "platelets",
+                   "hospitalization_days"]
         
-        for v in variables:
-            min_val = float(data[v].min())
-            max_val = float(data[v].max())
-            if v in enteras:
-                min_val = int(round(min_val))
-                max_val = int(round(max_val))
-                step_val = 1.0
-            else:
-                step_val = round((max_val - min_val) / 100, 2)
-            rangos[v] = {"min": min_val, "max": max_val, "step": step_val}
+        # Calcular rangos para todas las columnas numéricas
+        numeric_cols = data.select_dtypes(include=[np.number]).columns.tolist()
+        
+        for col in numeric_cols:
+            if col != "diagnosis":  # Excluir la columna objetivo
+                try:
+                    min_val = float(data[col].min())
+                    max_val = float(data[col].max())
+                    
+                    # Verificar si es una columna entera
+                    if any(col.lower().startswith(e.lower()) for e in enteras):
+        min_val = int(round(min_val))
+        max_val = int(round(max_val))
+                        step_val = 1.0
+    else:
+                        step_val = max(0.01, round((max_val - min_val) / 100, 2))
+                    
+                    rangos[col] = {"min": min_val, "max": max_val, "step": step_val}
+                except:
+                    pass
+        
         return rangos
     except Exception as e:
-        st.warning(f"Error al cargar rangos: {str(e)}. Usando rangos por defecto.")
         # Retornar rangos por defecto
         return {
             "ALT (SGPT)": {"min": 0, "max": 500, "step": 1.0},
@@ -189,70 +214,238 @@ elif pagina == "Predicción Individual":
     
     st.markdown("---")
     
-    # Crear formulario con columnas
+    # Cargar dataset completo para obtener todas las columnas
+    data_full = load_full_dataset()
+    all_columns = data_full.columns.tolist() if data_full is not None else []
+    
+    # Crear formulario completo con todas las columnas
     col1, col2, col3 = st.columns(3)
     
     valores = {}
+    
+    # Función auxiliar para obtener valor por defecto
+    def get_default_value(col, rangos):
+        if col in rangos:
+            return float(rangos[col]["min"])
+        elif col.lower() in ["male", "female", "urban_origin", "rural_origin", "student", 
+                             "agriculture_livestock", "homemaker", "merchant", "unemployed",
+                             "professional", "various_jobs", "headache", "weakness", "eye_pain",
+                             "abdominal_pain", "dizziness", "myalgias", "hemorrhages", "chills",
+                             "jaundice", "rash", "itching", "fever", "loss_of_appetite",
+                             "arthralgias", "vomiting", "hemoptysis", "bruises", "diarrhea",
+                             "edema", "petechiae", "respiratory_difficulty"]:
+            return 0  # No para campos binarios
+        elif col.lower() == "body_temperature":
+            return 36.5
+        else:
+            return 0.0
+    
+    # Mapeo de nombres de columnas a etiquetas en español
+    nombres_campos = {
+        "male": "Male",
+        "female": "Female", 
+        "age": "Age",
+        "urban_origin": "Urban Origin",
+        "rural_origin": "Rural Origin",
+        "student": "Student",
+        "agriculture_livestock": "Agriculture Livestock",
+        "homemaker": "Homemaker",
+        "merchant": "Merchant",
+        "unemployed": "Unemployed",
+        "professional": "Professional",
+        "various_jobs": "Various Jobs",
+        "hospitalization_days": "Hospitalization Days",
+        "body_temperature": "Body Temperature",
+        "headache": "Headache",
+        "weakness": "Weakness",
+        "eye_pain": "Eye Pain",
+        "abdominal_pain": "Abdominal Pain",
+        "dizziness": "Dizziness",
+        "myalgias": "Myalgias",
+        "hemorrhages": "Hemorrhages",
+        "chills": "Chills",
+        "jaundice": "Jaundice",
+        "rash": "Rash",
+        "itching": "Itching",
+        "fever": "Fever",
+        "loss_of_appetite": "Loss Of Appetite",
+        "arthralgias": "Arthralgias",
+        "vomiting": "Vomiting",
+        "hemoptysis": "Hemoptysis",
+        "bruises": "Bruises",
+        "diarrhea": "Diarrhea",
+        "edema": "Edema",
+        "petechiae": "Petechiae",
+        "respiratory_difficulty": "Respiratory Difficulty",
+        "hemoglobin": "Hemoglobin",
+        "hematocrit": "Hematocrit",
+        "red_blood_cells": "Red Blood Cells",
+        "white_blood_cells": "White Blood Cells",
+        "neutrophils": "Neutrophils",
+        "eosinophils": "Eosinophils",
+        "lymphocytes": "Lymphocytes",
+        "monocytes": "Monocytes",
+        "basophils": "Basophils",
+        "platelets": "Platelets",
+        "AST (SGOT)": "AST (SGOT)",
+        "ALT (SGPT)": "ALT (SGPT)",
+        "total_bilirubin": "Total Bilirubin",
+        "direct_bilirubin": "Direct Bilirubin",
+        "indirect_bilirubin": "Indirect Bilirubin",
+        "total_proteins": "Total Proteins",
+        "albumin": "Albumin",
+        "ALP (alkaline_phosphatase)": "ALP (Alkaline Phosphatase)",
+        "urea": "Urea",
+        "creatinine": "Creatinine"
+    }
+    
+    # Campos binarios (Si/No)
+    campos_binarios = ["male", "female", "urban_origin", "rural_origin", "student",
+                       "agriculture_livestock", "homemaker", "merchant", "unemployed",
+                       "professional", "various_jobs", "headache", "weakness", "eye_pain",
+                       "abdominal_pain", "dizziness", "myalgias", "hemorrhages", "chills",
+                       "jaundice", "rash", "itching", "fever", "loss_of_appetite",
+                       "arthralgias", "vomiting", "hemoptysis", "bruises", "diarrhea",
+                       "edema", "petechiae", "respiratory_difficulty"]
+    
+    # Organizar columnas en tres grupos
+    todas_columnas = [col for col in all_columns if col != "diagnosis"]
+    
+    # Dividir columnas en tres grupos aproximadamente iguales
+    total_cols = len(todas_columnas)
+    cols_per_group = total_cols // 3
+    campos_col1 = todas_columnas[:cols_per_group]
+    campos_col2 = todas_columnas[cols_per_group:2*cols_per_group]
+    campos_col3 = todas_columnas[2*cols_per_group:]
+    
+    # Columna 1
     with col1:
-        for i, var in enumerate(variables[:3]):
-            if var in rangos:
-                valores[var] = st.number_input(
-                    nombres_variables[var],
-                    min_value=float(rangos[var]["min"]),
-                    max_value=float(rangos[var]["max"]),
-                    step=float(rangos[var]["step"]),
-                    value=float(rangos[var]["min"]),
-                    key=f"input_{var}"
+        for col in campos_col1:
+            col_label = nombres_campos.get(col, col)
+            col_lower = col.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+            
+            if col_lower in campos_binarios:
+                valores[col] = st.selectbox(
+                    col_label,
+                    options=[0, 1],
+                    format_func=lambda x: "No" if x == 0 else "Yes",
+                    key=f"input_{col}",
+                    index=0
+                )
+            elif col in rangos:
+                valores[col] = st.number_input(
+                    col_label,
+                    min_value=float(rangos[col]["min"]),
+                    max_value=float(rangos[col]["max"]),
+                    step=float(rangos[col]["step"]),
+                    value=get_default_value(col, rangos),
+                    key=f"input_{col}"
+                )
+            else:
+                valores[col] = st.number_input(
+                    col_label,
+                    value=0.0,
+                    step=0.01,
+                    key=f"input_{col}"
                 )
     
+    # Columna 2
     with col2:
-        for i, var in enumerate(variables[3:6]):
-            if var in rangos:
-                valores[var] = st.number_input(
-                    nombres_variables[var],
-                    min_value=float(rangos[var]["min"]),
-                    max_value=float(rangos[var]["max"]),
-                    step=float(rangos[var]["step"]),
-                    value=float(rangos[var]["min"]),
-                    key=f"input_{var}"
+        for col in campos_col2:
+            col_label = nombres_campos.get(col, col)
+            col_lower = col.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+            
+            if col_lower in campos_binarios:
+                valores[col] = st.selectbox(
+                    col_label,
+                    options=[0, 1],
+                    format_func=lambda x: "No" if x == 0 else "Yes",
+                    key=f"input_{col}",
+                    index=0
+                )
+            elif col in rangos:
+                valores[col] = st.number_input(
+                    col_label,
+                    min_value=float(rangos[col]["min"]),
+                    max_value=float(rangos[col]["max"]),
+                    step=float(rangos[col]["step"]),
+                    value=get_default_value(col, rangos),
+                    key=f"input_{col}"
+                )
+            else:
+                valores[col] = st.number_input(
+                    col_label,
+                    value=0.0,
+                    step=0.01,
+                    key=f"input_{col}"
                 )
     
+    # Columna 3
     with col3:
-        for i, var in enumerate(variables[6:]):
-            if var in rangos:
-                valores[var] = st.number_input(
-                    nombres_variables[var],
-                    min_value=float(rangos[var]["min"]),
-                    max_value=float(rangos[var]["max"]),
-                    step=float(rangos[var]["step"]),
-                    value=float(rangos[var]["min"]),
-                    key=f"input_{var}"
+        for col in campos_col3:
+            col_label = nombres_campos.get(col, col)
+            col_lower = col.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+            
+            if col_lower in campos_binarios:
+                valores[col] = st.selectbox(
+                    col_label,
+                    options=[0, 1],
+                    format_func=lambda x: "No" if x == 0 else "Yes",
+                    key=f"input_{col}",
+                    index=0
+                )
+            elif col in rangos:
+                valores[col] = st.number_input(
+                    col_label,
+                    min_value=float(rangos[col]["min"]),
+                    max_value=float(rangos[col]["max"]),
+                    step=float(rangos[col]["step"]),
+                    value=get_default_value(col, rangos),
+                    key=f"input_{col}"
+                )
+            else:
+                valores[col] = st.number_input(
+                    col_label,
+                    value=0.0,
+                    step=0.01,
+                    key=f"input_{col}"
                 )
     
     st.markdown("---")
     
-    if st.button("🔮 Predecir", type="primary", use_container_width=True):
+    if st.button("🔮 Realizar Predicción", type="primary", use_container_width=True):
         try:
-            # Preparar datos
-            datos = [valores[v] for v in variables]
-            df = pd.DataFrame([datos], columns=variables)
+            # Preparar datos solo con las variables que necesita el modelo
+            datos_modelo = []
+            for v in variables:
+                if v in valores:
+                    datos_modelo.append(valores[v])
+                else:
+                    # Si falta una variable necesaria, usar valor por defecto
+                    if v in rangos:
+                        datos_modelo.append(float(rangos[v]["min"]))
+                    else:
+                        datos_modelo.append(0.0)
+            
+            df = pd.DataFrame([datos_modelo], columns=variables)
             
             # Obtener modelo y scaler
             scaler = models[modelo_sel]["scaler"]
             modelo = models[modelo_sel]["modelo"]
-            
+
             # Predecir
             pred = modelo.predict(scaler.transform(df))[0]
-            
+
             # Mostrar resultado
             st.markdown("---")
             if pred == 1:
                 st.error("⚠️ **Resultado Positivo para enfermedad**")
             else:
                 st.success("✅ **Resultado Negativo para enfermedad**")
-                
+
         except Exception as e:
             st.error(f"Error al realizar la predicción: {str(e)}")
+            st.exception(e)
 
 # === Página de Predicción por Lotes ===
 elif pagina == "Predicción por Lotes":
@@ -293,11 +486,11 @@ elif pagina == "Predicción por Lotes":
                     X = df_clean[variables]
                     
                     # Obtener modelo y scaler
-                    scaler = models[modelo_sel]["scaler"]
-                    modelo = models[modelo_sel]["modelo"]
-                    
+            scaler = models[modelo_sel]["scaler"]
+            modelo = models[modelo_sel]["modelo"]
+
                     # Predecir
-                    y_pred = modelo.predict(scaler.transform(X))
+            y_pred = modelo.predict(scaler.transform(X))
                     df_clean["Predicción"] = ["Positivo" if p == 1 else "Negativo" for p in y_pred]
                     
                     # Mostrar resultados
@@ -308,7 +501,7 @@ elif pagina == "Predicción por Lotes":
                     if "diagnosis" in df_clean.columns:
                         y_true = df_clean["diagnosis"]
                         
-                        acc = round(accuracy_score(y_true, y_pred) * 100, 2)
+                acc = round(accuracy_score(y_true, y_pred) * 100, 2)
                         prec = round(precision_score(y_true, y_pred, average='weighted', zero_division=0) * 100, 2)
                         rec = round(recall_score(y_true, y_pred, average='weighted', zero_division=0) * 100, 2)
                         f1 = round(f1_score(y_true, y_pred, average='weighted', zero_division=0) * 100, 2)
@@ -324,14 +517,14 @@ elif pagina == "Predicción por Lotes":
                         cm = confusion_matrix(y_true, y_pred)
                         fig, ax = plt.subplots(figsize=(6, 5))
                         sns.heatmap(cm, annot=True, fmt='d', cmap='Purples', cbar=False, ax=ax)
-                        ax.set_xlabel("Predicción")
-                        ax.set_ylabel("Valor Real")
+                ax.set_xlabel("Predicción")
+                ax.set_ylabel("Valor Real")
                         ax.set_title("Matriz de Confusión")
                         st.pyplot(fig)
                     
                     # Descargar resultados
-                    os.makedirs("uploads", exist_ok=True)
-                    salida = os.path.join("uploads", "resultados_prediccion.xlsx")
+            os.makedirs("uploads", exist_ok=True)
+            salida = os.path.join("uploads", "resultados_prediccion.xlsx")
                     df_clean.to_excel(salida, index=False)
                     
                     with open(salida, "rb") as f:
@@ -342,6 +535,6 @@ elif pagina == "Predicción por Lotes":
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                             use_container_width=True
                         )
-                    
+
         except Exception as e:
             st.error(f"Error al procesar el archivo: {str(e)}")
