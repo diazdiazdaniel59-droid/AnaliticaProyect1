@@ -49,16 +49,16 @@ def load_models():
     with open(escalador_path, "rb") as f:
         scaler_logistica = pickle.load(f)
     
-models = {
-    "rna": {
+    models = {
+        "rna": {
             "modelo": modelo_rna,
             "scaler": scaler_rna
-    },
-    "logistica": {
+        },
+        "logistica": {
             "modelo": modelo_logistica,
             "scaler": scaler_logistica
+        }
     }
-}
     return models
 
 # === Variables seleccionadas (9 más relevantes) ===
@@ -116,7 +116,7 @@ def load_ranges():
                 "creatinine": {"min": 0.0, "max": 10.0, "step": 0.1}
             }
         
-rangos = {}
+        rangos = {}
         enteras = ["age", "hematocrit", "hemoglobin", "AST (SGOT)", "ALT (SGPT)", 
                    "red_blood_cells", "white_blood_cells", "neutrophils", "eosinophils",
                    "lymphocytes", "monocytes", "basophils", "platelets",
@@ -133,10 +133,10 @@ rangos = {}
                     
                     # Verificar si es una columna entera
                     if any(col.lower().startswith(e.lower()) for e in enteras):
-        min_val = int(round(min_val))
-        max_val = int(round(max_val))
+                        min_val = int(round(min_val))
+                        max_val = int(round(max_val))
                         step_val = 1.0
-    else:
+                    else:
                         step_val = max(0.01, round((max_val - min_val) / 100, 2))
                     
                     rangos[col] = {"min": min_val, "max": max_val, "step": step_val}
@@ -486,11 +486,11 @@ elif pagina == "Predicción por Lotes":
                     X = df_clean[variables]
                     
                     # Obtener modelo y scaler
-            scaler = models[modelo_sel]["scaler"]
-            modelo = models[modelo_sel]["modelo"]
-
+                    scaler = models[modelo_sel]["scaler"]
+                    modelo = models[modelo_sel]["modelo"]
+                    
                     # Predecir
-            y_pred = modelo.predict(scaler.transform(X))
+                    y_pred = modelo.predict(scaler.transform(X))
                     df_clean["Predicción"] = ["Positivo" if p == 1 else "Negativo" for p in y_pred]
                     
                     # Mostrar resultados
