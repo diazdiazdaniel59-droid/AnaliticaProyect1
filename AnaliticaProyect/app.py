@@ -501,7 +501,7 @@ elif pagina == "Predicción por Lotes":
                     if "diagnosis" in df_clean.columns:
                         y_true = df_clean["diagnosis"]
                         
-                acc = round(accuracy_score(y_true, y_pred) * 100, 2)
+                        acc = round(accuracy_score(y_true, y_pred) * 100, 2)
                         prec = round(precision_score(y_true, y_pred, average='weighted', zero_division=0) * 100, 2)
                         rec = round(recall_score(y_true, y_pred, average='weighted', zero_division=0) * 100, 2)
                         f1 = round(f1_score(y_true, y_pred, average='weighted', zero_division=0) * 100, 2)
@@ -517,14 +517,14 @@ elif pagina == "Predicción por Lotes":
                         cm = confusion_matrix(y_true, y_pred)
                         fig, ax = plt.subplots(figsize=(6, 5))
                         sns.heatmap(cm, annot=True, fmt='d', cmap='Purples', cbar=False, ax=ax)
-                ax.set_xlabel("Predicción")
-                ax.set_ylabel("Valor Real")
+                        ax.set_xlabel("Predicción")
+                        ax.set_ylabel("Valor Real")
                         ax.set_title("Matriz de Confusión")
                         st.pyplot(fig)
                     
                     # Descargar resultados
-            os.makedirs("uploads", exist_ok=True)
-            salida = os.path.join("uploads", "resultados_prediccion.xlsx")
+                    os.makedirs("uploads", exist_ok=True)
+                    salida = os.path.join("uploads", "resultados_prediccion.xlsx")
                     df_clean.to_excel(salida, index=False)
                     
                     with open(salida, "rb") as f:
