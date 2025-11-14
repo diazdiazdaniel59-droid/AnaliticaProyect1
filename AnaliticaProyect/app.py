@@ -18,13 +18,34 @@ st.set_page_config(
 @st.cache_resource
 def load_models():
     """Cargar modelos entrenados"""
-    with open("models/modelo_rna.pkl", "rb") as f:
+    # Determinar el directorio base
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.join(base_dir, "models")
+    
+    # Verificar que existe el directorio
+    if not os.path.exists(models_dir):
+        raise FileNotFoundError(f"Directorio de modelos no encontrado: {models_dir}. Directorio actual: {os.getcwd()}")
+    
+    modelo_rna_path = os.path.join(models_dir, "modelo_rna.pkl")
+    escalador_rna_path = os.path.join(models_dir, "escalador_rna.pkl")
+    modelo_logistica_path = os.path.join(models_dir, "modelo_logistica.pkl")
+    escalador_path = os.path.join(models_dir, "escalador.pkl")
+    
+    # Verificar que existan los archivos
+    for path, name in [(modelo_rna_path, "modelo_rna.pkl"), 
+                       (escalador_rna_path, "escalador_rna.pkl"),
+                       (modelo_logistica_path, "modelo_logistica.pkl"),
+                       (escalador_path, "escalador.pkl")]:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Archivo no encontrado: {name} en {path}")
+    
+    with open(modelo_rna_path, "rb") as f:
         modelo_rna = pickle.load(f)
-    with open("models/escalador_rna.pkl", "rb") as f:
+    with open(escalador_rna_path, "rb") as f:
         scaler_rna = pickle.load(f)
-    with open("models/modelo_logistica.pkl", "rb") as f:
+    with open(modelo_logistica_path, "rb") as f:
         modelo_logistica = pickle.load(f)
-    with open("models/escalador.pkl", "rb") as f:
+    with open(escalador_path, "rb") as f:
         scaler_logistica = pickle.load(f)
     
     models = {
@@ -62,7 +83,27 @@ nombres_variables = {
 def load_ranges():
     """Cargar rangos de valores del dataset"""
     try:
-        data = pd.read_excel("uploads/DEMALE-HSJM_2025_data.xlsx")
+        # Determinar el directorio base
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        uploads_dir = os.path.join(base_dir, "uploads")
+        data_path = os.path.join(uploads_dir, "DEMALE-HSJM_2025_data.xlsx")
+        
+        if not os.path.exists(data_path):
+            st.warning(f"Archivo de datos no encontrado: {data_path}. Usando rangos por defecto.")
+            # Retornar rangos por defecto si no se encuentra el archivo
+            return {
+                "ALT (SGPT)": {"min": 0, "max": 500, "step": 1.0},
+                "AST (SGOT)": {"min": 0, "max": 500, "step": 1.0},
+                "total_bilirubin": {"min": 0.0, "max": 50.0, "step": 0.5},
+                "direct_bilirubin": {"min": 0.0, "max": 20.0, "step": 0.2},
+                "hemoglobin": {"min": 0, "max": 20, "step": 1.0},
+                "hematocrit": {"min": 0, "max": 60, "step": 1.0},
+                "age": {"min": 0, "max": 100, "step": 1.0},
+                "urea": {"min": 0.0, "max": 100.0, "step": 1.0},
+                "creatinine": {"min": 0.0, "max": 10.0, "step": 0.1}
+            }
+        
+        data = pd.read_excel(data_path)
         rangos = {}
         enteras = ["age", "hematocrit", "hemoglobin", "AST (SGOT)", "ALT (SGPT)"]
         
@@ -78,8 +119,19 @@ def load_ranges():
             rangos[v] = {"min": min_val, "max": max_val, "step": step_val}
         return rangos
     except Exception as e:
-        st.error(f"Error al cargar rangos: {str(e)}")
-        return {}
+        st.warning(f"Error al cargar rangos: {str(e)}. Usando rangos por defecto.")
+        # Retornar rangos por defecto
+        return {
+            "ALT (SGPT)": {"min": 0, "max": 500, "step": 1.0},
+            "AST (SGOT)": {"min": 0, "max": 500, "step": 1.0},
+            "total_bilirubin": {"min": 0.0, "max": 50.0, "step": 0.5},
+            "direct_bilirubin": {"min": 0.0, "max": 20.0, "step": 0.2},
+            "hemoglobin": {"min": 0, "max": 20, "step": 1.0},
+            "hematocrit": {"min": 0, "max": 60, "step": 1.0},
+            "age": {"min": 0, "max": 100, "step": 1.0},
+            "urea": {"min": 0.0, "max": 100.0, "step": 1.0},
+            "creatinine": {"min": 0.0, "max": 10.0, "step": 0.1}
+        }
 
 # === Cargar modelos ===
 try:

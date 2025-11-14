@@ -31,10 +31,15 @@ instance/
 .webassets-cache
 
 # Modelos y datos (comentar si necesitas subirlos a Streamlit Cloud)
+# Los modelos .pkl DEBEN estar en el repositorio para Streamlit Cloud
 # *.pkl
 # *.h5
 # *.joblib
 # *.model
+
+# Asegurar que los modelos se suban (anular ignore para models/)
+!AnaliticaProyect/models/
+!AnaliticaProyect/models/*.pkl
 
 # Datos (comentar si necesitas subirlos a Streamlit Cloud)
 # uploads/*.xlsx
@@ -43,6 +48,9 @@ instance/
 # *.xlsx
 # *.csv
 # *.xls
+
+# Asegurar que el archivo de datos se suba
+!AnaliticaProyect/uploads/DEMALE-HSJM_2025_data.xlsx
 
 # Excluir solo archivos temporales de uploads
 AnaliticaProyect/uploads/resultados_prediccion.xlsx
